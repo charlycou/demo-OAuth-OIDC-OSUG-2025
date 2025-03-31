@@ -34,3 +34,4 @@ coverage
 /oauth-github-demo-server/.idea/
 /oauth-github-demo-server/node_modules/
 **/node_modules
+**/.idea
