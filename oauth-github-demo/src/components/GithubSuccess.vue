@@ -1,7 +1,6 @@
 <template>
   <div class="github-success">
-    <h1 v-if="loading">Github login in progress</h1>
-    <h1 v-else>GitHub Login Successful!</h1>
+    <h1>GitHub Login Successful!</h1>
     <div v-if="loading">Loading user information...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else>
@@ -25,10 +24,9 @@ export default defineComponent({
     const userInfo = ref({});
 
     // GitHub OAuth Config
-    // const clientId = "Ov23li8UwlxVAIOjBuUV";
-    // // const clientSecret = "87c85021fa17fff2307503b0b303b3a5a22b81a6"
-    // const tokenEndpoint = "https://github.com/login/oauth/access_token";
-    // const redirectUri = "http://localhost:5173/success";
+    const clientId = "Ov23li8UwlxVAIOjBuUV";
+    const tokenEndpoint = "https://github.com/login/oauth/access_token";
+    const redirectUri = "http://localhost:5173/success";
 
     /**
      * Parse URL and extract the "code" parameter.
@@ -41,9 +39,23 @@ export default defineComponent({
     /**
      * Exchange the authorization code for an access token.
      */
-    const fetchAccessToken = async (code) => {
+    const fetchAccessToken = async (code, codeVerifier) => {
       try {
-        const response = await fetch("http://localhost:3000/login?code=" + code)
+        const response = await fetch(tokenEndpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Access-Control-Allow-Origin": "https://github.com",
+          },
+          body: JSON.stringify({
+            client_id: clientId,
+            // client_secret: clientSecret,
+            code,
+            code_verifier: codeVerifier,
+            redirect_uri: redirectUri,
+          }),
+        });
         const data = await response.json();
 
         if (data.error) {
@@ -60,7 +72,11 @@ export default defineComponent({
      */
     const fetchGitHubUser = async (accessToken) => {
       try {
-        const response = await fetch("http://localhost:3000/user");
+        const response = await fetch("https://api.github.com/user", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
         return await response.json();
       } catch (err) {
         throw new Error("Error fetching GitHub user data: " + err.message);
@@ -73,12 +89,17 @@ export default defineComponent({
     const handleRedirect = async () => {
       try {
         const code = getCodeFromUrl();
+        const codeVerifier = sessionStorage.getItem("pkce_code_verifier"); // Retrieve the PKCE code verifier
 
         if (!code) {
           throw new Error("Authorization code not found in the URL.");
         }
+        if (!codeVerifier) {
+          throw new Error("Code verifier not found in session storage. PKCE flow might be broken.");
+        }
+
         // Step 1: Exchange the authorization code for an access token
-        const accessToken = await fetchAccessToken(code);
+        const accessToken = await fetchAccessToken(code, codeVerifier);
 
         // Step 2: Use the access token to fetch the GitHub user's info
         const user = await fetchGitHubUser(accessToken);
