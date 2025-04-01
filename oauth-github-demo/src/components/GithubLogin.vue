@@ -7,6 +7,7 @@
 
 <script>
 import { defineComponent } from "vue";
+import pkceChallenge from "pkce-challenge";
 
 export default defineComponent({
   name: "GitHubLoginPKCE",
@@ -18,45 +19,19 @@ export default defineComponent({
     const scopes = "read:user user:email";
 
     /**
-     * Generate a random string to serve as the code verifier (PKCE mechanism).
-     */
-    const generateCodeVerifier = () => {
-      const array = new Uint32Array(56);
-      crypto.getRandomValues(array);
-      return Array.from(array, (num) => num.toString(36)).join("");
-    };
-
-    /**
-     * Create a base64-encoded SHA256 hash of the code verifier.
-     */
-    const generateCodeChallenge = async (codeVerifier) => {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(codeVerifier);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return btoa(
-          hashArray.map((byte) => String.fromCharCode(byte)).join("")
-      )
-          .replace(/\+/g, "-")
-          .replace(/\//g, "_")
-          .replace(/=+$/, "");
-    };
-
-    /**
      * Handle the GitHub login flow.
      */
     const loginWithGitHub = async () => {
       // Step 1: Generate PKCE code verifier and challenge
-      const codeVerifier = generateCodeVerifier();
-      const codeChallenge = await generateCodeChallenge(codeVerifier);
+      const challenge = await pkceChallenge();
 
       // Save the code verifier to session storage for later use
-      sessionStorage.setItem("pkce_code_verifier", codeVerifier);
+      sessionStorage.setItem("pkce_code_verifier", challenge.code_verifier);
 
       // Step 2: Redirect user to GitHub's authorization endpoint
       const authUrl = `${authorizationEndpoint}?client_id=${clientId}&redirect_uri=${encodeURIComponent(
           redirectUri
-      )}&scope=${encodeURIComponent(scopes)}&response_type=code&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+      )}&scope=${encodeURIComponent(scopes)}&response_type=code&code_challenge=${challenge.code_challenge}&code_challenge_method=S256`;
       window.location.href = authUrl;
     };
 
