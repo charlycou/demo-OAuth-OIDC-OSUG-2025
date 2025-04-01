@@ -1,5 +1,5 @@
 <script setup>
-import GithubLogin from "@/components/GithubLogin.vue";
+import GithubLogin from "@/components/Login.vue";
 </script>
 
 <template>

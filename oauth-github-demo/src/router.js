@@ -1,18 +1,18 @@
 import { createRouter, createWebHistory } from "vue-router";
-import GitHubSuccess from "@/components/GithubSuccess.vue";
-import GithubLogin from "@/components/GithubLogin.vue";
+import Callback from "@/components/Callback.vue";
+import Login from "@/components/Login.vue";
 
 const routes = [
     {
         path: "/success", // GitHub redirect URI
-        name: "GitHubSuccess",
-        component: GitHubSuccess, // Renders the component responsible for handling GitHub OAuth
+        name: "Callback",
+        component: Callback, // Renders the component responsible for handling GitHub OAuth
     },
     // default homepage route
     {
         path: "/",
-        name: "GitHubLogin",
-        component: GithubLogin
+        name: "Login",
+        component: Login
     }
 ];
 

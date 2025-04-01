@@ -1,6 +1,6 @@
 <template>
-  <div class="github-success">
-    <h1>GitHub Login Successful!</h1>
+  <div class="callback">
+    <h1>Login Successful!</h1>
     <div v-if="loading">Loading user information...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else>
@@ -17,7 +17,7 @@
 import { defineComponent, ref, onMounted } from "vue";
 
 export default defineComponent({
-  name: "GitHubSuccess",
+  name: "Callback",
   setup() {
     const loading = ref(true);
     const error = ref(null);
@@ -25,7 +25,7 @@ export default defineComponent({
 
     // GitHub OAuth Config
     const clientId = "Ov23li8UwlxVAIOjBuUV";
-    const tokenEndpoint = "https://github.com/login/oauth/access_token";
+    const tokenEndpoint = "http://localhost:8080/realms/Demo/protocol/openid-connect/token";
     const redirectUri = "http://localhost:5173/success";
 
     /**
@@ -44,13 +44,11 @@ export default defineComponent({
         const response = await fetch(tokenEndpoint, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Access-Control-Allow-Origin": "https://github.com",
+            'Content-Type': 'application/x-www-form-urlencoded'
           },
-          body: JSON.stringify({
+          body: new URLSearchParams({
             client_id: clientId,
-            // client_secret: clientSecret,
+            grant_type: "authorization_code",
             code,
             code_verifier: codeVerifier,
             redirect_uri: redirectUri,
@@ -68,18 +66,18 @@ export default defineComponent({
     };
 
     /**
-     * Fetch GitHub user data using the access token.
+     * Fetch user data using the access token.
      */
-    const fetchGitHubUser = async (accessToken) => {
+    const fetchUser = async (accessToken) => {
       try {
-        const response = await fetch("https://api.github.com/user", {
+        const response = await fetch("http://localhost:8080/realms/Demo/protocol/openid-connect/userinfo", {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         });
         return await response.json();
       } catch (err) {
-        throw new Error("Error fetching GitHub user data: " + err.message);
+        throw new Error("Error fetching user data: " + err.message);
       }
     };
 
@@ -102,7 +100,7 @@ export default defineComponent({
         const accessToken = await fetchAccessToken(code, codeVerifier);
 
         // Step 2: Use the access token to fetch the GitHub user's info
-        const user = await fetchGitHubUser(accessToken);
+        const user = await fetchUser(accessToken);
 
         // Step 3: Display the user info
         userInfo.value = user;
