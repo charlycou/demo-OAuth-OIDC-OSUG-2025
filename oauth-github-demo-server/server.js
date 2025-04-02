@@ -32,7 +32,6 @@ app.get("/login", async (req, res) => {
 });
 
 app.get("/user", async (req, res) => {
-    const { code } = req.query;
 
     try {
         // Exchange the code for a GitHub access token
@@ -48,6 +47,37 @@ app.get("/user", async (req, res) => {
         res.status(500).json({ error: "Failed to fetch user data" });
     }
 });
+
+
+app.get("/repo" ,async (req, res) => {
+    console.log(req.query);
+    const { owner } = req.query;
+    const { repository } = req.query;
+
+    try {
+        const url = `https://api.github.com/repos/${owner}/${repository}`;
+
+        // Make a GET request to the GitHub API
+        const response = await axios.get(url, {
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${access_token}`}
+        });
+        res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
+        res.json(response.data);
+    } catch (error) {
+        // Handle errors (e.g., repository not found, rate limit exceeded)
+        if (error.response) {
+            console.error(`Error: ${error.response.status} - ${error.response.data.message}`);
+        } else {
+            console.error(`Error: ${error.message}`);
+        }
+
+        // Rethrow the error to the caller
+        throw error;
+    }
+})
+
 
 app.listen(3000, () => {
     console.log("Server is running on http://localhost:3000");

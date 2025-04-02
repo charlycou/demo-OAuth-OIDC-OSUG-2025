@@ -5,17 +5,22 @@
     <div v-if="loading">Loading user information...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else>
-      <h2>Welcome, {{ userInfo.name || userInfo.login }}!</h2>
-      <p><strong>Username:</strong> {{ userInfo.login }}</p>
-      <p><strong>Email:</strong> {{ userInfo.email || "Not available" }}</p>
-      <p><strong>GitHub URL:</strong> <a :href="userInfo.html_url" target="_blank">{{ userInfo.html_url }}</a></p>
-      <img :src="userInfo.avatar_url" alt="User Avatar" width="100" height="100" />
+      <div>
+        <h2>Welcome, {{ userInfo.name || userInfo.login }}!</h2>
+        <p><strong>Username:</strong> {{ userInfo.login }}</p>
+        <p><strong>Email:</strong> {{ userInfo.email || "Not available" }}</p>
+        <p><strong>GitHub URL:</strong> <a :href="userInfo.html_url" target="_blank">{{ userInfo.html_url }}</a></p>
+        <img :src="userInfo.avatar_url" alt="User Avatar" width="100" height="100"/>
+      </div>
+<!--      <div>-->
+<!--        <p><strong>Repository:</strong> {{ repository.name }}</p>-->
+<!--      </div>-->
     </div>
   </div>
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from "vue";
+import {defineComponent, ref, onMounted} from "vue";
 
 export default defineComponent({
   name: "GitHubSuccess",
@@ -23,6 +28,7 @@ export default defineComponent({
     const loading = ref(true);
     const error = ref(null);
     const userInfo = ref({});
+    const repository = ref({});
 
     // GitHub OAuth Config
     // const clientId = "Ov23li8UwlxVAIOjBuUV";
@@ -58,9 +64,21 @@ export default defineComponent({
     /**
      * Fetch GitHub user data using the access token.
      */
-    const fetchGitHubUser = async (accessToken) => {
+    const fetchGitHubUser = async () => {
       try {
         const response = await fetch("http://localhost:3000/user");
+        return await response.json();
+      } catch (err) {
+        throw new Error("Error fetching GitHub user data: " + err.message);
+      }
+    };
+
+    /**
+     * Fetch GitHub repo data using the access token.
+     */
+    const fetchGitHubRepo = async (owner, repository) => {
+      try {
+        const response = await fetch(`http://localhost:3000/repo?owner=${owner}&repository=${repository}`);
         return await response.json();
       } catch (err) {
         throw new Error("Error fetching GitHub user data: " + err.message);
@@ -83,8 +101,12 @@ export default defineComponent({
         // Step 2: Use the access token to fetch the GitHub user's info
         const user = await fetchGitHubUser(accessToken);
 
-        // Step 3: Display the user info
+        // Step 3: Use the access token to fetch repository info
+        // const repo = await fetchGitHubRepo("charlycou", "demo-OAuth-OIDC-OSUG-2025")
+
+        // Step 4: Display the user info and repository info
         userInfo.value = user;
+        // repository.value = repo;
         loading.value = false;
       } catch (err) {
         error.value = err.message;
@@ -101,6 +123,7 @@ export default defineComponent({
       loading,
       error,
       userInfo,
+      repository
     };
   },
 });
@@ -111,10 +134,12 @@ export default defineComponent({
   text-align: center;
   padding: 20px;
 }
+
 .error {
   color: red;
   font-weight: bold;
 }
+
 img {
   border-radius: 50%;
   margin-top: 10px;

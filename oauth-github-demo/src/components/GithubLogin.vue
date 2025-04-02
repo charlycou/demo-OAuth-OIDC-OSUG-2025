@@ -15,7 +15,7 @@ export default defineComponent({
     const clientId = "Ov23li8UwlxVAIOjBuUV";
     const redirectUri = "http://localhost:5173/success";
     const authorizationEndpoint = "https://github.com/login/oauth/authorize";
-    const scopes = "read:user user:email repo";
+    const scopes = "read:user user:email";
 
     /**
      * Handle the GitHub login flow.
